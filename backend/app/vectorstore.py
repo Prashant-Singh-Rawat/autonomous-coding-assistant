@@ -3,7 +3,7 @@ from typing import List
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain.docstore.document import Document
+from langchain_core.documents import Document
 from . import models
 
 # In a real app, you would configure the embedding model to be OpenAI, local HuggingFace, etc.
