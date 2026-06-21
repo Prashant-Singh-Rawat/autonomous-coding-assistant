@@ -3,9 +3,10 @@ from .state import GraphState
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
 from ..vectorstore import get_vector_store
+import os
 
-# Initialize LLM
-llm = ChatOpenAI(temperature=0)
+# Initialize LLM with fallback so it doesn't crash on boot if the key is missing
+llm = ChatOpenAI(temperature=0, api_key=os.getenv("OPENAI_API_KEY", "dummy_key"))
 
 def retrieve_context(state: GraphState) -> GraphState:
     """Retrieves context from FAISS vector store based on user query."""

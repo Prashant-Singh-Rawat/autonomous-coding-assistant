@@ -13,7 +13,7 @@ def create_vector_store(repository: models.Repository, files: List[models.Reposi
     """
     Creates a FAISS vector store from the repository files.
     """
-    embeddings = OpenAIEmbeddings()
+    embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY", "dummy_key"))
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
         chunk_overlap=200,
@@ -49,6 +49,6 @@ def get_vector_store(repository_id: str):
     """
     save_path = f"data/vector_stores/{repository_id}"
     if os.path.exists(save_path):
-        embeddings = OpenAIEmbeddings()
+        embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY", "dummy_key"))
         return FAISS.load_local(save_path, embeddings, allow_dangerous_deserialization=True)
     return None
