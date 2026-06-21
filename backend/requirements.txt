@@ -1,0 +1,16 @@
+fastapi>=0.104.1
+uvicorn>=0.24.0
+sqlalchemy>=2.0.23
+alembic>=1.12.1
+psycopg2-binary>=2.9.9
+pydantic>=2.4.2
+pydantic-settings>=2.0.3
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+python-multipart>=0.0.6
+langchain>=0.0.340
+langgraph>=0.0.10
+langchain-openai>=0.0.2
+faiss-cpu>=1.7.4
+sentence-transformers>=2.2.2
+httpx>=0.25.1
