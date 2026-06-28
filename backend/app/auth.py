@@ -8,7 +8,12 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from . import database, models, schemas
 
-SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-key-for-dev-only")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError(
+        "CRITICAL: SECRET_KEY environment variable is not set. "
+        "Set a strong, random secret before starting the server."
+    )
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
