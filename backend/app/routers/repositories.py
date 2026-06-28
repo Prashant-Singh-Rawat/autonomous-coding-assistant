@@ -1,9 +1,14 @@
+import re
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from .. import schemas, models, auth, database, ingestion, vectorstore
 
 router = APIRouter(prefix="/repositories", tags=["Repositories"])
+
+def validate_uuid(uuid_str: str):
+    if not re.match(r'^[0-9a-f-]{36}$', uuid_str, re.I):
+        raise HTTPException(status_code=400, detail="Invalid repository ID format")
 
 @router.post("/", response_model=schemas.RepositoryResponse)
 def create_repository(
@@ -37,6 +42,7 @@ def get_repositories(db: Session = Depends(database.get_db), current_user: model
 
 @router.get("/{repo_id}", response_model=schemas.RepositoryResponse)
 def get_repository(repo_id: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
+    validate_uuid(repo_id)
     repo = db.query(models.Repository).filter(models.Repository.id == repo_id, models.Repository.user_id == current_user.id).first()
     if not repo:
         raise HTTPException(status_code=404, detail="Repository not found")
@@ -44,6 +50,7 @@ def get_repository(repo_id: str, db: Session = Depends(database.get_db), current
 
 @router.get("/{repo_id}/reports", response_model=List[schemas.ReportResponse])
 def get_repository_reports(repo_id: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
+    validate_uuid(repo_id)
     repo = get_repository(repo_id, db, current_user)
     return repo.reports
 

@@ -1,3 +1,4 @@
+import re
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -19,6 +20,10 @@ def chat_with_repo(
     db: Session = Depends(database.get_db), 
     current_user: models.User = Depends(auth.get_current_user)
 ):
+    # Validate UUID format (defense in depth)
+    if not re.match(r'^[0-9a-f-]{36}$', repo_id, re.I):
+        raise HTTPException(status_code=400, detail="Invalid repository ID format")
+
     # Verify ownership
     repo = db.query(models.Repository).filter(models.Repository.id == repo_id, models.Repository.user_id == current_user.id).first()
     if not repo:
@@ -36,11 +41,15 @@ def chat_with_repo(
     
     # Invoke LangGraph
     try:
-        # In MVP, this requires OPENAI_API_KEY to actually work
-        # result = app_graph.invoke(initial_state)
-        # reply = result.get("final_response", "Sorry, I couldn't generate a response.")
-        
-        reply = f"Simulated response to: '{request.query}'. Please set OPENAI_API_KEY for full functionality."
+        # Import inside handler or ensure dependencies are loaded
+        # Under normal workflow, when OPENAI_API_KEY is configured, this works:
+        result = app_graph.invoke(initial_state)
+        reply = result.get("final_response", "Sorry, I couldn't generate a response.")
+    except ValueError as e:
+        if "integrity" in str(e).lower() or "missing" in str(e).lower():
+            reply = "The codebase index appears to be corrupted or tampered with. Please re-ingest the repository."
+        else:
+            reply = f"Error: {str(e)}"
     except Exception as e:
         reply = f"Error generating response: {str(e)}"
         
