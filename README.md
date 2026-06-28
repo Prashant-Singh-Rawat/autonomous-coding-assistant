@@ -17,7 +17,7 @@ An elite cross-functional multi-agent repository intelligence platform. This Saa
 
 ### Running Locally
 
-1. Create a `.env` file in the `backend/` directory:
+1. Create a `.env` file in the project root (same directory as `docker-compose.yml`):
    ```env
    DATABASE_URL=postgresql://user:password@db:5432/antigravity
    SECRET_KEY=your_super_secret_jwt_key
