@@ -26,12 +26,14 @@ def analyze_architecture(state: GraphState) -> GraphState:
     print("---ANALYZE ARCHITECTURE---")
     # In a full implementation, this agent would map the entire repo
     # using specific prompts and the LLM.
-    return {"reports": {"architecture": "Scaffolded architecture report."}}
+    current_reports = state.get("reports", {})
+    return {"reports": {**current_reports, "architecture": "Scaffolded architecture report."}}
 
 def security_audit(state: GraphState) -> GraphState:
     print("---SECURITY AUDIT---")
     # Security scanning logic here
-    return {"reports": {"security": "Scaffolded security report."}}
+    current_reports = state.get("reports", {})
+    return {"reports": {**current_reports, "security": "Scaffolded security report."}}
 
 def synthesize_response(state: GraphState) -> GraphState:
     print("---SYNTHESIZE RESPONSE---")

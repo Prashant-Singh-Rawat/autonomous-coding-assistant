@@ -1,5 +1,6 @@
-from typing import TypedDict, List, Dict, Any, Sequence
+from typing import TypedDict, List, Dict, Any, Sequence, Annotated
 from langchain_core.messages import BaseMessage
+import operator
 
 class GraphState(TypedDict):
     """
@@ -9,5 +10,5 @@ class GraphState(TypedDict):
     repository_id: str
     user_query: str
     repository_context: str # Context gathered from vector DB
-    reports: Dict[str, Any] # intermediate reports like security, arch
+    reports: Annotated[Dict[str, Any], operator.ior] # merge reducer — prevents agent clobbering
     final_response: str
