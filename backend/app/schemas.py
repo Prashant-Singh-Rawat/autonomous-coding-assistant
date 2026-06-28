@@ -24,6 +24,7 @@ class TokenData(BaseModel):
 class RepositoryBase(BaseModel):
     name: str
     source_url: Optional[str] = None
+    local_path: Optional[str] = None
 
 class RepositoryCreate(RepositoryBase):
     pass
@@ -32,6 +33,7 @@ class RepositoryResponse(RepositoryBase):
     id: str
     user_id: str
     status: str
+    local_path: Optional[str] = None
     created_at: datetime
     class Config:
         from_attributes = True
