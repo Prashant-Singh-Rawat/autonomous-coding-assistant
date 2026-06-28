@@ -34,13 +34,16 @@ def chat_with_repo(
         "final_response": ""
     }
     
-    # Invoke LangGraph
     try:
-        # In MVP, this requires OPENAI_API_KEY to actually work
         # result = app_graph.invoke(initial_state)
         # reply = result.get("final_response", "Sorry, I couldn't generate a response.")
         
         reply = f"Simulated response to: '{request.query}'. Please set OPENAI_API_KEY for full functionality."
+    except ValueError as e:
+        if "integrity" in str(e).lower():
+            reply = "The codebase index appears to be corrupted. Please re-ingest the repository."
+        else:
+            reply = f"Error: {str(e)}"
     except Exception as e:
         reply = f"Error generating response: {str(e)}"
         

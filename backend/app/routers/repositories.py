@@ -1,9 +1,14 @@
+import re
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from .. import schemas, models, auth, database, ingestion, vectorstore
 
 router = APIRouter(prefix="/repositories", tags=["Repositories"])
+
+def _validate_repo_id(repo_id: str):
+    if not re.match(r'^[0-9a-f-]{36}$', repo_id, re.I):
+        raise HTTPException(status_code=400, detail=f"Invalid repository ID format: {repo_id}")
 
 @router.post("/", response_model=schemas.RepositoryResponse)
 def create_repository(
@@ -37,6 +42,7 @@ def get_repositories(db: Session = Depends(database.get_db), current_user: model
 
 @router.get("/{repo_id}", response_model=schemas.RepositoryResponse)
 def get_repository(repo_id: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
+    _validate_repo_id(repo_id)
     repo = db.query(models.Repository).filter(models.Repository.id == repo_id, models.Repository.user_id == current_user.id).first()
     if not repo:
         raise HTTPException(status_code=404, detail="Repository not found")
