@@ -1,10 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import auth, repositories, chat
-from app.database import Base, engine
-
-# Create tables for MVP instead of waiting for alembic run
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Autonomous Coding Assistant API",
@@ -14,7 +10,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # For dev only, restrict in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -23,6 +19,11 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(repositories.router)
 app.include_router(chat.router)
+
+@app.on_event("startup")
+async def startup():
+    from app.database import Base, engine
+    Base.metadata.create_all(bind=engine)
 
 @app.get("/")
 def read_root():

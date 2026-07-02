@@ -26,7 +26,9 @@ _api_key = os.getenv("OPENAI_API_KEY", "")
 llm = ChatOpenAI(
     model="gpt-4o-mini",
     temperature=0.2,
-    api_key=_api_key or "dummy_key"
+    api_key=_api_key or "dummy_key",
+    timeout=30,
+    max_retries=2,
 )
 
 # ─── Secret / vulnerability patterns ──────────────────────────────────────────
