@@ -7,7 +7,7 @@ class GraphState(TypedDict):
     State of the LangGraph workflow.
     All fields are passed between agents in the graph.
     """
-    messages: Sequence[BaseMessage]
+    messages: Annotated[Sequence[BaseMessage], add_messages]
     repository_id: str
     user_query: str
     repository_context: str         # Semantic context from FAISS
