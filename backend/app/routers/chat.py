@@ -39,7 +39,6 @@ def chat_with_repo(
         "final_response": ""
     }
     
-    # Invoke LangGraph
     try:
         # Import inside handler or ensure dependencies are loaded
         # Under normal workflow, when OPENAI_API_KEY is configured, this works:

@@ -6,7 +6,7 @@ class GraphState(TypedDict):
     """
     State of the LangGraph workflow.
     """
-    messages: Sequence[BaseMessage]
+    messages: Annotated[Sequence[BaseMessage], add_messages]
     repository_id: str
     user_query: str
     repository_context: str # Context gathered from vector DB

@@ -54,11 +54,9 @@ def create_vector_store(repository: models.Repository, files: List[models.Reposi
 
     split_docs = text_splitter.split_documents(documents)
     
-    # Create the FAISS index
     if split_docs:
         vectorstore = FAISS.from_documents(split_docs, embeddings)
         
-        # Save locally in a structured directory
         save_path = f"data/vector_stores/{repository.id}"
         os.makedirs(save_path, exist_ok=True)
         vectorstore.save_local(save_path)
