@@ -12,7 +12,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     raise RuntimeError(
         "CRITICAL: SECRET_KEY environment variable is not set. "
-        "Set a strong, random secret in production."
+        "Set a strong, random secret before starting the server."
     )
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30

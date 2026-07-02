@@ -24,11 +24,14 @@ def retrieve_context(state: GraphState) -> GraphState:
 
 def analyze_architecture(state: GraphState) -> GraphState:
     print("---ANALYZE ARCHITECTURE---")
+    # In a full implementation, this agent would map the entire repo
+    # using specific prompts and the LLM.
     current_reports = state.get("reports", {})
     return {"reports": {**current_reports, "architecture": "Scaffolded architecture report."}}
 
 def security_audit(state: GraphState) -> GraphState:
     print("---SECURITY AUDIT---")
+    # Security scanning logic here
     current_reports = state.get("reports", {})
     return {"reports": {**current_reports, "security": "Scaffolded security report."}}
 

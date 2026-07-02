@@ -21,7 +21,7 @@ services:
     container_name: antigravity_backend
     environment:
       - DATABASE_URL=postgresql://user:password@db:5432/antigravity
-      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY must be set}
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY must be set in .env}
     ports:
       - "8000:8000"
     depends_on:
