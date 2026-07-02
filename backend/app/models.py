@@ -23,6 +23,7 @@ class Repository(Base):
     user_id = Column(String, ForeignKey("users.id"))
     name = Column(String, index=True)
     source_url = Column(String, nullable=True)
+    local_path = Column(String, nullable=True)
     status = Column(String, default="pending")
     created_at = Column(DateTime, default=datetime.utcnow)
     

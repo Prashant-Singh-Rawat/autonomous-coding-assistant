@@ -2,9 +2,12 @@ services:
   - type: web
     name: autonomous-coding-assistant-api
     env: python
+    plan: free
     rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    buildCommand: pip install -r requirements.txt && alembic upgrade head
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2
+    healthCheckPath: /health
+    autoDeploy: true
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -13,7 +16,10 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: OPENAI_API_KEY
-        sync: false
+        sync: false  # Set this manually in the Render dashboard
+
 databases:
   - name: antigravity-db
     plan: free
+    databaseName: antigravity
+    user: antigravity_user
