@@ -8,9 +8,11 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from . import models
+from .config import settings
 
-# SECRET_KEY used to sign/verify vector stores. In production, ensure this is a robust environment variable.
-_INTEGRITY_KEY = os.getenv("SECRET_KEY", "fallback_dev_secret_key_for_signing_vector_stores")
+_INTEGRITY_KEY = settings.vector_store_hmac_key
+if not _INTEGRITY_KEY:
+    raise RuntimeError("VECTOR_STORE_HMAC_KEY must be set for vector store integrity verification")
 
 def _compute_integrity_hash(repository_id: str, data_dir: str) -> str:
     """

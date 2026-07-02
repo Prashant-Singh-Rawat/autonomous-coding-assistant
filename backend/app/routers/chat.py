@@ -1,3 +1,4 @@
+import asyncio
 import re
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -19,7 +20,7 @@ class ChatResponse(BaseModel):
 
 
 @router.post("/{repo_id}", response_model=ChatResponse)
-def chat_with_repo(
+async def chat_with_repo(
     repo_id: str,
     request: ChatRequest,
     db: Session = Depends(database.get_db),
@@ -78,9 +79,16 @@ def chat_with_repo(
 
     # ── Run the LangGraph workflow ─────────────────────────────────────────────
     try:
-        result = app_graph.invoke(initial_state)
+        result = await asyncio.wait_for(
+            asyncio.to_thread(app_graph.invoke, initial_state),
+            timeout=120.0,
+        )
         reply     = result.get("final_response") or "Sorry, I couldn't generate a response."
         citations = result.get("source_citations") or []
+
+    except asyncio.TimeoutError:
+        reply     = "The request timed out. Please try a simpler query."
+        citations = []
 
     except ValueError as e:
         err_str = str(e).lower()

@@ -1,8 +1,8 @@
-import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
+from .config import settings
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/antigravity")
+DATABASE_URL = settings.database_url
 
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
