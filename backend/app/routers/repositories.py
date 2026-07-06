@@ -1,5 +1,6 @@
 import os
 import re
+import signal
 from pathlib import Path
 from typing import List
 
@@ -73,6 +74,7 @@ def scan_local_directory(local_path: str) -> list[tuple[str, str, str]]:
         dirnames[:] = [
             d for d in dirnames
             if d not in IGNORED_DIRS and not d.startswith(".")
+            and not (Path(dirpath) / d).is_symlink()
         ]
 
         for filename in filenames:
@@ -211,6 +213,11 @@ def get_repository_reports(
 
 # ─── Background Task ──────────────────────────────────────────────────────────
 
+def _timeout_handler(signum, frame):
+    raise TimeoutError("Repository processing task timed out after 300 seconds")
+
+signal.signal(signal.SIGALRM, _timeout_handler)
+
 def process_repository_task(repo_id: str, local_path: str | None = None):
     """
     Background task that:
@@ -219,8 +226,10 @@ def process_repository_task(repo_id: str, local_path: str | None = None):
     3. Creates a signed FAISS vector store.
     4. Generates initial analysis reports.
     """
+    signal.alarm(300)
     db = database.SessionLocal()
     try:
+        signal.alarm(300)
         repo = db.query(models.Repository).filter(models.Repository.id == repo_id).first()
         if not repo:
             return
@@ -303,4 +312,5 @@ def process_repository_task(repo_id: str, local_path: str | None = None):
             pass
         print(f"[Repository {repo_id}] unhandled error: {exc}")
     finally:
+        signal.alarm(0)
         db.close()
