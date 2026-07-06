@@ -144,12 +144,16 @@ def create_repository(
 
 @router.get("/", response_model=List[schemas.RepositoryResponse])
 def get_repositories(
+    skip: int = 0,
+    limit: int = 100,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
     return (
         db.query(models.Repository)
         .filter(models.Repository.user_id == current_user.id)
+        .offset(skip)
+        .limit(limit)
         .all()
     )
 
@@ -177,6 +181,8 @@ def get_repository(
 @router.get("/{repo_id}/files")
 def get_repository_files(
     repo_id: str,
+    skip: int = 0,
+    limit: int = 100,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user),
 ):
@@ -186,6 +192,8 @@ def get_repository_files(
     files = (
         db.query(models.RepositoryFile)
         .filter(models.RepositoryFile.repository_id == repo_id)
+        .offset(skip)
+        .limit(limit)
         .all()
     )
     return [
@@ -201,12 +209,14 @@ def get_repository_files(
 @router.get("/{repo_id}/reports", response_model=List[schemas.ReportResponse])
 def get_repository_reports(
     repo_id: str,
+    skip: int = 0,
+    limit: int = 100,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
     validate_uuid(repo_id)
     repo = get_repository(repo_id, db, current_user)
-    return repo.reports
+    return repo.reports[skip:skip + limit]
 
 
 # ─── Background Task ──────────────────────────────────────────────────────────
