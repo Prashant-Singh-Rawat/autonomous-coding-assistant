@@ -14,19 +14,21 @@ _INTEGRITY_KEY = settings.vector_store_hmac_key
 if not _INTEGRITY_KEY:
     raise RuntimeError("VECTOR_STORE_HMAC_KEY must be set for vector store integrity verification")
 
+def _compute_content_hash(filepath: str) -> str:
+    hasher = hashlib.sha256()
+    with open(filepath, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
 def _compute_integrity_hash(repository_id: str, data_dir: str) -> str:
-    """
-    Computes HMAC-SHA256 over the sorted list of files (and their sizes) within the vector store directory.
-    This prevents directory modification/tampering.
-    """
     manifest = {}
     for root, dirs, files in os.walk(data_dir):
         for fname in sorted(files):
-            if fname == ".integrity":
-                continue  # Don't hash the signature file itself
+            if fname in (".integrity", ".content_hashes"):
+                continue
             fpath = os.path.join(root, fname)
-            manifest[fname] = os.path.getsize(fpath)
-            
+            manifest[fname] = _compute_content_hash(fpath)
     payload = json.dumps(manifest, sort_keys=True)
     return hmac.new(
         _INTEGRITY_KEY.encode("utf-8"),
@@ -37,7 +39,9 @@ def _compute_integrity_hash(repository_id: str, data_dir: str) -> str:
 def create_vector_store(repository: models.Repository, files: List[models.RepositoryFile]):
     """
     Creates a FAISS vector store from the repository files and signs it.
+    Uses native FAISS binary serialization (safe) + JSON docstore instead of pickle.
     """
+    import faiss
     embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY", "dummy_key"))
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
@@ -61,9 +65,20 @@ def create_vector_store(repository: models.Repository, files: List[models.Reposi
         
         save_path = f"data/vector_stores/{repository.id}"
         os.makedirs(save_path, exist_ok=True)
-        vectorstore.save_local(save_path)
         
-        # Write integrity signature
+        index = vectorstore.index
+        faiss.write_index(index, os.path.join(save_path, "index.faiss"))
+        
+        docstore_data = {
+            "docstore": vectorstore.docstore._dict if hasattr(vectorstore.docstore, '_dict') else {},
+            "index_to_docstore_id": vectorstore.index_to_docstore_id,
+        }
+        with open(os.path.join(save_path, "docstore.json"), "w") as f:
+            json.dump(docstore_data, f)
+        
+        with open(os.path.join(save_path, "embeddings_config.json"), "w") as f:
+            json.dump({"model": "text-embedding-ada-002"}, f)
+        
         integrity_hash = _compute_integrity_hash(repository.id, save_path)
         with open(os.path.join(save_path, ".integrity"), "w") as f:
             f.write(integrity_hash)
@@ -75,7 +90,12 @@ def create_vector_store(repository: models.Repository, files: List[models.Reposi
 def get_vector_store(repository_id: str) -> Optional[FAISS]:
     """
     Loads the FAISS vector store for a repository after verifying its HMAC integrity signature.
+    Uses native FAISS binary deserialization (safe, no pickle) + JSON docstore.
     """
+    import faiss
+    from langchain.schema import Document as LCDocument
+    from langchain_community.docstore.in_memory import InMemoryDocstore
+    
     save_path = f"data/vector_stores/{repository_id}"
     if os.path.exists(save_path):
         integrity_path = os.path.join(save_path, ".integrity")
@@ -89,7 +109,32 @@ def get_vector_store(repository_id: str) -> Optional[FAISS]:
         
         if not hmac.compare_digest(expected_hash, computed_hash):
             raise ValueError(f"Vector store integrity check FAILED for {repository_id}")
-            
+        
+        index_path = os.path.join(save_path, "index.faiss")
+        docstore_path = os.path.join(save_path, "docstore.json")
+        
+        if not os.path.exists(index_path) or not os.path.exists(docstore_path):
+            raise ValueError(f"Vector store files missing for {repository_id}")
+        
+        index = faiss.read_index(index_path)
+        
+        with open(docstore_path, "r") as f:
+            docstore_data = json.load(f)
+        
+        docstore_dict = {}
+        for k, v in docstore_data.get("docstore", {}).items():
+            docstore_dict[int(k)] = LCDocument(page_content=v.get("page_content", ""), metadata=v.get("metadata", {}))
+        
+        docstore = InMemoryDocstore(docstore_dict)
+        index_to_docstore_id = {int(k): v for k, v in docstore_data.get("index_to_docstore_id", {}).items()}
+        
         embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY", "dummy_key"))
-        return FAISS.load_local(save_path, embeddings, allow_dangerous_deserialization=True)
+        
+        vectorstore = FAISS(
+            embedding_function=embeddings,
+            index=index,
+            docstore=docstore,
+            index_to_docstore_id=index_to_docstore_id,
+        )
+        return vectorstore
     return None
