@@ -146,7 +146,7 @@ export default function RepoDetails() {
     },
   ]);
   const [query, setQuery]     = useState("");
-  const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false);
   const [activeTab, setActiveTab] = useState<"architecture" | "security" | "files">("architecture");
 
   const chatEndRef   = useRef<HTMLDivElement>(null);
@@ -183,14 +183,14 @@ export default function RepoDetails() {
   const handleChat = async (e?: React.FormEvent, overrideQuery?: string) => {
     e?.preventDefault();
     const q = (overrideQuery ?? query).trim();
-    if (!q || sending) return;
+    if (!q || sendingRef.current) return;
 
     const userMsg: ChatMessage = { role: "user", content: q };
     const loadingMsg: ChatMessage = { role: "assistant", content: "", loading: true };
 
     setChat((prev) => [...prev, userMsg, loadingMsg]);
     setQuery("");
-    setSending(true);
+    sendingRef.current = true;
 
     try {
       const data = await apiFetch(`/chat/${id}`, {
@@ -220,7 +220,7 @@ export default function RepoDetails() {
         return updated;
       });
     } finally {
-      setSending(false);
+      sendingRef.current = false;
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   };
@@ -498,7 +498,7 @@ export default function RepoDetails() {
                   <button
                     key={p}
                     onClick={() => handleChat(undefined, p)}
-                    disabled={sending}
+                    disabled={sendingRef.current}
                     className="px-3 py-1.5 text-[11px] rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700/50 hover:border-gray-600 transition-all disabled:opacity-50 whitespace-nowrap"
                   >
                     {p}
@@ -566,16 +566,16 @@ export default function RepoDetails() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Ask about the codebase…"
-                  disabled={sending || repo?.status === "processing"}
+                  disabled={sendingRef.current || repo?.status === "processing"}
                   className="flex-1 bg-gray-950 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all disabled:opacity-50"
                 />
                 <button
                   type="submit"
                   id="chat-send"
-                  disabled={sending || !query.trim() || repo?.status === "processing"}
+                  disabled={sendingRef.current || !query.trim() || repo?.status === "processing"}
                   className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-sm transition-all flex items-center gap-2 min-w-[80px] justify-center"
                 >
-                  {sending ? (
+                  {sendingRef.current ? (
                     <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
                   ) : (
                     "Send"
