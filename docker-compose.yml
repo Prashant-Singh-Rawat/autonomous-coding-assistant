@@ -29,7 +29,7 @@ services:
       - db
     restart: unless-stopped
     volumes:
-      - backend_data:/app
+      - ./backend:/app
 
   frontend:
     build:
@@ -47,4 +47,3 @@ services:
 
 volumes:
   postgres_data:
-  backend_data:

@@ -69,9 +69,18 @@ def create_vector_store(repository: models.Repository, files: List[models.Reposi
         index = vectorstore.index
         faiss.write_index(index, os.path.join(save_path, "index.faiss"))
         
+        docstore_items = {}
+        for doc_id in vectorstore.index_to_docstore_id.values():
+            doc = vectorstore.docstore.search(doc_id)
+            if hasattr(doc, "page_content"):
+                docstore_items[doc_id] = {
+                    "page_content": doc.page_content,
+                    "metadata": doc.metadata,
+                }
+
         docstore_data = {
-            "docstore": vectorstore.docstore._dict if hasattr(vectorstore.docstore, '_dict') else {},
-            "index_to_docstore_id": vectorstore.index_to_docstore_id,
+            "docstore": docstore_items,
+            "index_to_docstore_id": {str(k): v for k, v in vectorstore.index_to_docstore_id.items()},
         }
         with open(os.path.join(save_path, "docstore.json"), "w") as f:
             json.dump(docstore_data, f)
@@ -122,7 +131,7 @@ def get_vector_store(repository_id: str) -> Optional[FAISS]:
         
         docstore_dict = {}
         for k, v in docstore_data.get("docstore", {}).items():
-            docstore_dict[int(k)] = LCDocument(page_content=v.get("page_content", ""), metadata=v.get("metadata", {}))
+            docstore_dict[k] = LCDocument(page_content=v.get("page_content", ""), metadata=v.get("metadata", {}))
         
         docstore = InMemoryDocstore(docstore_dict)
         index_to_docstore_id = {int(k): v for k, v in docstore_data.get("index_to_docstore_id", {}).items()}
