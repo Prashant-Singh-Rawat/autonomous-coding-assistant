@@ -1,6 +1,6 @@
 import os
 import re
-import signal
+import threading
 from pathlib import Path
 from typing import List
 
@@ -223,10 +223,8 @@ def get_repository_reports(
 
 # ─── Background Task ──────────────────────────────────────────────────────────
 
-def _timeout_handler(signum, frame):
-    raise TimeoutError("Repository processing task timed out after 300 seconds")
+INGESTION_TIMEOUT_SECONDS = 300
 
-signal.signal(signal.SIGALRM, _timeout_handler)
 
 def process_repository_task(repo_id: str, local_path: str | None = None):
     """
@@ -236,10 +234,26 @@ def process_repository_task(repo_id: str, local_path: str | None = None):
     3. Creates a signed FAISS vector store.
     4. Generates initial analysis reports.
     """
-    signal.alarm(300)
     db = database.SessionLocal()
+    timed_out = False
+
+    def _timeout_handler():
+        nonlocal timed_out
+        timed_out = True
+        try:
+            repo = db.query(models.Repository).filter(models.Repository.id == repo_id).first()
+            if repo and repo.status == "processing":
+                repo.status = "failed"
+                db.commit()
+        except Exception:
+            pass
+        print(f"[Repository {repo_id}] processing task timed out after {INGESTION_TIMEOUT_SECONDS} seconds")
+
+    timer = threading.Timer(INGESTION_TIMEOUT_SECONDS, _timeout_handler)
+    timer.daemon = True
+    timer.start()
+
     try:
-        signal.alarm(300)
         repo = db.query(models.Repository).filter(models.Repository.id == repo_id).first()
         if not repo:
             return
@@ -322,5 +336,5 @@ def process_repository_task(repo_id: str, local_path: str | None = None):
             pass
         print(f"[Repository {repo_id}] unhandled error: {exc}")
     finally:
-        signal.alarm(0)
+        timer.cancel()
         db.close()
