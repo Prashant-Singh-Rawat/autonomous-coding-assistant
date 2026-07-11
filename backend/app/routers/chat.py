@@ -52,6 +52,7 @@ async def chat_with_repo(
     db_files = (
         db.query(models.RepositoryFile)
         .filter(models.RepositoryFile.repository_id == repo_id)
+        .limit(500)
         .all()
     )
 

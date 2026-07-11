@@ -7,12 +7,13 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from . import database, models, schemas
+from .config import settings
 
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = settings.jwt_secret_key
 if not SECRET_KEY:
     raise RuntimeError(
-        "CRITICAL: SECRET_KEY environment variable is not set. "
-        "Set a strong, random secret before starting the server."
+        "CRITICAL: JWT_SECRET_KEY environment variable is not set. "
+        "Set a strong, random secret in production."
     )
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30

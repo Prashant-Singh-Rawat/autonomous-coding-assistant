@@ -1,5 +1,6 @@
 import os
 import re
+import signal
 from pathlib import Path
 from typing import List
 
@@ -73,6 +74,7 @@ def scan_local_directory(local_path: str) -> list[tuple[str, str, str]]:
         dirnames[:] = [
             d for d in dirnames
             if d not in IGNORED_DIRS and not d.startswith(".")
+            and not (Path(dirpath) / d).is_symlink()
         ]
 
         for filename in filenames:
@@ -144,12 +146,16 @@ def create_repository(
 
 @router.get("/", response_model=List[schemas.RepositoryResponse])
 def get_repositories(
+    skip: int = 0,
+    limit: int = 100,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
     return (
         db.query(models.Repository)
         .filter(models.Repository.user_id == current_user.id)
+        .offset(skip)
+        .limit(limit)
         .all()
     )
 
@@ -177,6 +183,8 @@ def get_repository(
 @router.get("/{repo_id}/files")
 def get_repository_files(
     repo_id: str,
+    skip: int = 0,
+    limit: int = 100,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user),
 ):
@@ -186,6 +194,8 @@ def get_repository_files(
     files = (
         db.query(models.RepositoryFile)
         .filter(models.RepositoryFile.repository_id == repo_id)
+        .offset(skip)
+        .limit(limit)
         .all()
     )
     return [
@@ -201,15 +211,22 @@ def get_repository_files(
 @router.get("/{repo_id}/reports", response_model=List[schemas.ReportResponse])
 def get_repository_reports(
     repo_id: str,
+    skip: int = 0,
+    limit: int = 100,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
     validate_uuid(repo_id)
     repo = get_repository(repo_id, db, current_user)
-    return repo.reports
+    return repo.reports[skip:skip + limit]
 
 
 # ─── Background Task ──────────────────────────────────────────────────────────
+
+def _timeout_handler(signum, frame):
+    raise TimeoutError("Repository processing task timed out after 300 seconds")
+
+signal.signal(signal.SIGALRM, _timeout_handler)
 
 def process_repository_task(repo_id: str, local_path: str | None = None):
     """
@@ -219,8 +236,10 @@ def process_repository_task(repo_id: str, local_path: str | None = None):
     3. Creates a signed FAISS vector store.
     4. Generates initial analysis reports.
     """
+    signal.alarm(300)
     db = database.SessionLocal()
     try:
+        signal.alarm(300)
         repo = db.query(models.Repository).filter(models.Repository.id == repo_id).first()
         if not repo:
             return
@@ -303,4 +322,5 @@ def process_repository_task(repo_id: str, local_path: str | None = None):
             pass
         print(f"[Repository {repo_id}] unhandled error: {exc}")
     finally:
+        signal.alarm(0)
         db.close()

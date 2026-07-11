@@ -24,6 +24,12 @@ app.include_router(chat.router)
 async def startup():
     from app.database import Base, engine
     Base.metadata.create_all(bind=engine)
+    from app.config import settings
+    if settings.jwt_secret_key == settings.vector_store_hmac_key:
+        raise RuntimeError(
+            "JWT_SECRET_KEY and VECTOR_STORE_HMAC_KEY must be different. "
+            "Using the same key for both violates key separation."
+        )
 
 @app.get("/")
 def read_root():
