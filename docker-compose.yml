@@ -21,7 +21,8 @@ services:
     container_name: antigravity_backend
     environment:
       - DATABASE_URL=postgresql://user:password@db:5432/antigravity
-      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY must be set in .env}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?JWT_SECRET_KEY must be set in .env}
+      - VECTOR_STORE_HMAC_KEY=${VECTOR_STORE_HMAC_KEY:?VECTOR_STORE_HMAC_KEY must be set in .env}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
     ports:
       - "8000:8000"

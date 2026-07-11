@@ -13,7 +13,9 @@ services:
         fromDatabase:
           name: antigravity-db
           property: connectionString
-      - key: SECRET_KEY
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: VECTOR_STORE_HMAC_KEY
         generateValue: true
       - key: OPENAI_API_KEY
         sync: false  # Set this manually in the Render dashboard
