@@ -42,7 +42,7 @@ def create_vector_store(repository: models.Repository, files: List[models.Reposi
     Uses native FAISS binary serialization (safe) + JSON docstore instead of pickle.
     """
     import faiss
-    embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY", "dummy_key"))
+    embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY", "dummy_key"), timeout=30)
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
         chunk_overlap=200,
@@ -109,7 +109,6 @@ def get_vector_store(repository_id: str) -> Optional[FAISS]:
         
         if not hmac.compare_digest(expected_hash, computed_hash):
             raise ValueError(f"Vector store integrity check FAILED for {repository_id}")
-        
         index_path = os.path.join(save_path, "index.faiss")
         docstore_path = os.path.join(save_path, "docstore.json")
         
@@ -128,7 +127,7 @@ def get_vector_store(repository_id: str) -> Optional[FAISS]:
         docstore = InMemoryDocstore(docstore_dict)
         index_to_docstore_id = {int(k): v for k, v in docstore_data.get("index_to_docstore_id", {}).items()}
         
-        embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY", "dummy_key"))
+        embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY", "dummy_key"), timeout=30)
         
         vectorstore = FAISS(
             embedding_function=embeddings,
