@@ -11,6 +11,9 @@ import {
 import { Button, Card, CardContent, Badge } from "@/components/ui";
 import AutomationCenter from "@/components/github/AutomationCenter";
 
+const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+
 interface PullRequest {
   id: string;
   github_pr_number: number;
@@ -70,7 +73,7 @@ export default function GitHubManagementPage() {
       const token = localStorage.getItem("token");
       
       // Fetch Pull Requests
-      const prsRes = await fetch(`http://localhost:8000/repositories/${repoId}/pull-requests`, {
+      const prsRes = await fetch(`${API}/repositories/${repoId}/pull-requests`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (prsRes.ok) {
@@ -82,7 +85,7 @@ export default function GitHubManagementPage() {
       }
 
       // Fetch Issues
-      const issuesRes = await fetch(`http://localhost:8000/repositories/${repoId}/issues`, {
+      const issuesRes = await fetch(`${API}/repositories/${repoId}/issues`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (issuesRes.ok) {
@@ -94,7 +97,7 @@ export default function GitHubManagementPage() {
       }
 
       // Fetch Commits
-      const commitsRes = await fetch(`http://localhost:8000/repositories/${repoId}/commits`, {
+      const commitsRes = await fetch(`${API}/repositories/${repoId}/commits`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (commitsRes.ok) {
@@ -136,7 +139,7 @@ export default function GitHubManagementPage() {
     setReviewDraft("");
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:8000/pull-requests/${pr.id}/review/generate`, {
+      const res = await fetch(`${API}/pull-requests/${pr.id}/review/generate`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -158,7 +161,7 @@ export default function GitHubManagementPage() {
     if (!selectedPr) return;
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:8000/pull-requests/${selectedPr.id}/review/post`, {
+      const res = await fetch(`${API}/pull-requests/${selectedPr.id}/review/post`, {
         method: "POST",
         headers: { 
           "Authorization": `Bearer ${token}`,

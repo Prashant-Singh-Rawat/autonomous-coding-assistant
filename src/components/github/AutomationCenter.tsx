@@ -7,6 +7,9 @@ import {
 } from "lucide-react";
 import { Button, Card, CardContent, Input, Badge } from "@/components/ui";
 
+const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+
 interface Rule {
   id: string;
   trigger_event: string;
@@ -31,7 +34,7 @@ export default function AutomationCenter({ repoId }: AutomationCenterProps) {
     setIsLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:8000/workspace/${repoId}/automation-rules`, {
+      const res = await fetch(`${API}/workspace/${repoId}/automation-rules`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (res.ok) {
@@ -59,7 +62,7 @@ export default function AutomationCenter({ repoId }: AutomationCenterProps) {
   const handleAddRule = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:8000/workspace/${repoId}/automation-rules`, {
+      const res = await fetch(`${API}/workspace/${repoId}/automation-rules`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

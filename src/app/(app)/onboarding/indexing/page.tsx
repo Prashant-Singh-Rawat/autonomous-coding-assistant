@@ -6,6 +6,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, CheckCircle2, AlertTriangle, RefreshCw, Terminal } from "lucide-react";
 import { Button } from "@/components/ui";
 
+const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+
 interface EventPayload {
   id?: string;
   stage: "cloning" | "scanning" | "embedding";
@@ -44,7 +47,7 @@ function IndexingProgressHandler() {
     const fetchRepo = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`http://localhost:8000/repositories/${repoId}`, {
+        const res = await fetch(`${API}/repositories/${repoId}`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (res.ok) {
@@ -70,7 +73,7 @@ function IndexingProgressHandler() {
     }
 
     const token = localStorage.getItem("token") || localStorage.getItem("access_token");
-    const url = `http://localhost:8000/repositories/${repoId}/events${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+    const url = `${API}/repositories/${repoId}/events${token ? `?token=${encodeURIComponent(token)}` : ""}`;
     const es = new EventSource(url);
     eventSourceRef.current = es;
 
@@ -168,7 +171,7 @@ function IndexingProgressHandler() {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:8000/repositories/${repoId}/retry`, {
+      const res = await fetch(`${API}/repositories/${repoId}/retry`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}` }
       });

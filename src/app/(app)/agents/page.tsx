@@ -10,7 +10,7 @@ import {
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, Badge, Button, Progress } from "@/components/ui";
 
-const API = "http://localhost:8000";
+const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 const AGENT_TEMPLATES = [
   { id: "planner", name: "Planner", icon: Sparkles, color: "from-brand-600 to-indigo-600", description: "Breaks down user requests into actionable task checklists", runsTotal: 47, successRate: 96 },

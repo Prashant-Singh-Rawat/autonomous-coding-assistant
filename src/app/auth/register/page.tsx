@@ -11,6 +11,9 @@ import { Button, Input } from "@/components/ui";
 import { AuthShell } from "@/components/layout/AuthShell";
 import { cn } from "@/lib/utils";
 
+const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().min(1, "Email is required").email("Invalid email address"),
@@ -177,7 +180,7 @@ export default function RegisterPage() {
         transition={{ delay: 0.3, duration: 0.4 }}
       >
         <div className="grid grid-cols-2 gap-3 mt-4">
-          <a href="http://localhost:8000/auth/github/login" className="flex items-center justify-center gap-2 h-11 rounded-xl bg-white/7 border border-white/12 text-white text-sm font-medium hover:bg-white/10 hover:border-white/20 transition-all">
+          <a href={`${API}/auth/github/login`} className="flex items-center justify-center gap-2 h-11 rounded-xl bg-white/7 border border-white/12 text-white text-sm font-medium hover:bg-white/10 hover:border-white/20 transition-all">
             <GitBranch className="w-4 h-4" /> Continue with GitHub
           </a>
           <button type="button" disabled className="flex items-center justify-center gap-2 h-11 rounded-xl bg-white/7 border border-white/12 text-white/50 text-sm font-medium cursor-not-allowed">

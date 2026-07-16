@@ -6,6 +6,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button, Input } from "@/components/ui";
 import { useRouter } from "next/navigation";
 
+const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+
 interface GithubOrg {
   id: number;
   login: string;
@@ -78,7 +81,7 @@ export default function RepositoriesPage() {
     
     let backendUp = false;
     try {
-      const res = await fetch("http://localhost:8000/health", { signal: AbortSignal.timeout(3000) });
+      const res = await fetch(`${API}/health`, { signal: AbortSignal.timeout(3000) });
       if (res.ok) backendUp = true;
     } catch (e) {
       backendUp = false;
@@ -109,8 +112,8 @@ export default function RepositoriesPage() {
         clearInterval(interval);
         const token = localStorage.getItem("token") || localStorage.getItem("access_token");
         const connectUrl = token
-          ? `http://localhost:8000/auth/github/connect?token=${encodeURIComponent(token)}`
-          : "http://localhost:8000/auth/github/connect";
+          ? `${API}/auth/github/connect?token=${encodeURIComponent(token)}`
+          : `${API}/auth/github/connect`;
         window.location.href = connectUrl;
       } else {
         setCountdown(count);
@@ -120,7 +123,7 @@ export default function RepositoriesPage() {
 
   const fetchRateLimitDetails = async (token: string | null, errDetail: ErrorDetail) => {
     try {
-      const res = await fetch("http://localhost:8000/github/rate_limit", {
+      const res = await fetch(`${API}/github/rate_limit`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (res.ok) {
@@ -144,7 +147,7 @@ export default function RepositoriesPage() {
   const fetchOrgs = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:8000/repositories/github/orgs", {
+      const res = await fetch(`${API}/repositories/github/orgs`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (res.ok) {
@@ -163,8 +166,8 @@ export default function RepositoriesPage() {
     try {
       const token = localStorage.getItem("token");
       const url = selectedOrg 
-        ? `http://localhost:8000/repositories/github/list?org=${selectedOrg}`
-        : "http://localhost:8000/repositories/github/list";
+        ? `${API}/repositories/github/list?org=${selectedOrg}`
+        : `${API}/repositories/github/list`;
 
       const res = await fetch(url, {
         headers: { "Authorization": `Bearer ${token}` }
@@ -261,7 +264,7 @@ export default function RepositoriesPage() {
     try {
       const token = localStorage.getItem("token");
       // Call standard refresh endpoint on backend
-      const res = await fetch(`http://localhost:8000/auth/refresh?refresh_token=${token}`, {
+      const res = await fetch(`${API}/auth/refresh?refresh_token=${token}`, {
         method: "POST"
       });
       if (res.ok) {
@@ -297,7 +300,7 @@ export default function RepositoriesPage() {
     try {
       const token = localStorage.getItem("token");
       const [owner, name] = repo.full_name.split("/");
-      const res = await fetch(`http://localhost:8000/repositories/github/${owner}/${name}/branches`, {
+      const res = await fetch(`${API}/repositories/github/${owner}/${name}/branches`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (res.ok) {
@@ -320,7 +323,7 @@ export default function RepositoriesPage() {
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:8000/repositories/", {
+      const res = await fetch(`${API}/repositories/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -442,7 +445,7 @@ export default function RepositoriesPage() {
                 size="sm" 
                 onClick={() => {
                   const t = localStorage.getItem("token") || localStorage.getItem("access_token");
-                  window.location.href = t ? `http://localhost:8000/auth/github/connect?token=${encodeURIComponent(t)}` : "http://localhost:8000/auth/github/connect";
+                  window.location.href = t ? `${API}/auth/github/connect?token=${encodeURIComponent(t)}` : `${API}/auth/github/connect`;
                 }}
                 className="shrink-0"
               >
@@ -593,7 +596,7 @@ export default function RepositoriesPage() {
             <Button 
               onClick={() => {
                 const t = localStorage.getItem("token") || localStorage.getItem("access_token");
-                window.location.href = t ? `http://localhost:8000/auth/github/connect?token=${encodeURIComponent(t)}` : "http://localhost:8000/auth/github/connect";
+                window.location.href = t ? `${API}/auth/github/connect?token=${encodeURIComponent(t)}` : `${API}/auth/github/connect`;
               }}
               className="w-full"
               variant="outline"

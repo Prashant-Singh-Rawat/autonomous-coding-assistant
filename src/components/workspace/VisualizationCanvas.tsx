@@ -5,6 +5,9 @@ import ReactFlow, { Background, Controls, MiniMap, useNodesState, useEdgesState 
 import "reactflow/dist/style.css";
 import { Loader2, AlertCircle } from "lucide-react";
 
+const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+
 interface CanvasProps {
   repoId: string;
 }
@@ -23,7 +26,7 @@ export default function VisualizationCanvas({ repoId }: CanvasProps) {
       setError(null);
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`http://localhost:8000/workspace/${repoId}/generate/diagram`, {
+        const res = await fetch(`${API}/workspace/${repoId}/generate/diagram`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

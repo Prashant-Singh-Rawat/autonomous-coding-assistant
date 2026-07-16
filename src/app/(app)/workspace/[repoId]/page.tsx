@@ -12,6 +12,9 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import VisualizationCanvas from "@/components/workspace/VisualizationCanvas";
 
+const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+
 interface RepoFile {
   path: string;
   language: string;
@@ -73,7 +76,7 @@ export default function WorkspacePage() {
       try {
         const token = localStorage.getItem("token");
         // Verify repository is ready
-        const repoRes = await fetch(`http://localhost:8000/repositories/${repoId}`, {
+        const repoRes = await fetch(`${API}/repositories/${repoId}`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (!repoRes.ok) throw new Error("Repository not found");
@@ -85,7 +88,7 @@ export default function WorkspacePage() {
         }
 
         // Fetch files
-        const filesRes = await fetch(`http://localhost:8000/repositories/${repoId}/files`, {
+        const filesRes = await fetch(`${API}/repositories/${repoId}/files`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (filesRes.ok) {
@@ -97,7 +100,7 @@ export default function WorkspacePage() {
         }
 
         // Fetch findings
-        const findingsRes = await fetch(`http://localhost:8000/workspace/${repoId}/findings`, {
+        const findingsRes = await fetch(`${API}/workspace/${repoId}/findings`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (findingsRes.ok) {
@@ -106,14 +109,14 @@ export default function WorkspacePage() {
         }
 
         // Fetch past messages/conversations
-        const convsRes = await fetch(`http://localhost:8000/workspace/${repoId}/conversations`, {
+        const convsRes = await fetch(`${API}/workspace/${repoId}/conversations`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (convsRes.ok) {
           const convsData = await convsRes.json();
           if (convsData.length > 0) {
             setConversationId(convsData[0].id);
-            const msgsRes = await fetch(`http://localhost:8000/workspace/conversations/${convsData[0].id}/messages`, {
+            const msgsRes = await fetch(`${API}/workspace/conversations/${convsData[0].id}/messages`, {
               headers: { "Authorization": `Bearer ${token}` }
             });
             if (msgsRes.ok) {
@@ -139,7 +142,7 @@ export default function WorkspacePage() {
     setFileExplanation("");
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:8000/repositories/${repoId}/file-content?path=${encodeURIComponent(file.path)}`, {
+      const res = await fetch(`${API}/repositories/${repoId}/file-content?path=${encodeURIComponent(file.path)}`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (res.ok) {
@@ -160,7 +163,7 @@ export default function WorkspacePage() {
     setFileExplanation("");
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:8000/workspace/${repoId}/explain`, {
+      const res = await fetch(`${API}/workspace/${repoId}/explain`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -198,7 +201,7 @@ export default function WorkspacePage() {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:8000/workspace/${repoId}/chat`, {
+      const res = await fetch(`${API}/workspace/${repoId}/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -4,6 +4,9 @@ import React, { useEffect, useState } from "react";
 import { GitBranch, Trash2, ExternalLink, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui";
 
+const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+
 interface GithubStatus {
   connected: boolean;
   username?: string;
@@ -21,7 +24,7 @@ export default function IntegrationsSettingsPage() {
     const fetchStatus = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:8000/integrations/github/status", {
+        const res = await fetch(`${API}/integrations/github/status`, {
           headers: {
             "Authorization": `Bearer ${token}`
           }
@@ -43,7 +46,7 @@ export default function IntegrationsSettingsPage() {
     setIsDisconnecting(true);
     try {
       const token = localStorage.getItem("token");
-      await fetch("http://localhost:8000/integrations/github", {
+      await fetch(`${API}/integrations/github`, {
         method: "DELETE",
         headers: {
           "Authorization": `Bearer ${token}`
@@ -134,9 +137,9 @@ export default function IntegrationsSettingsPage() {
               </Button>
             ) : (
               <a href={(() => {
-                if (typeof window === "undefined") return "http://localhost:8000/auth/github/connect";
+                if (typeof window === "undefined") return `${API}/auth/github/connect`;
                 const t = localStorage.getItem("token") || localStorage.getItem("access_token");
-                return t ? `http://localhost:8000/auth/github/connect?token=${encodeURIComponent(t)}` : "http://localhost:8000/auth/github/connect";
+                return t ? `${API}/auth/github/connect?token=${encodeURIComponent(t)}` : `${API}/auth/github/connect`;
               })()}>
                 <Button>Connect GitHub</Button>
               </a>

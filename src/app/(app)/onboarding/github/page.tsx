@@ -6,6 +6,9 @@ import { motion } from "framer-motion";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 
+const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+
 function GithubConnectHandler() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -22,12 +25,12 @@ function GithubConnectHandler() {
     }
   }, [isSuccess, router]);
 
-  const [connectUrl, setConnectUrl] = useState("http://localhost:8000/auth/github/connect");
+  const [connectUrl, setConnectUrl] = useState(`${API}/auth/github/connect`);
 
   useEffect(() => {
     const token = localStorage.getItem("token") || localStorage.getItem("access_token");
     if (token) {
-      setConnectUrl(`http://localhost:8000/auth/github/connect?token=${encodeURIComponent(token)}`);
+      setConnectUrl(`${API}/auth/github/connect?token=${encodeURIComponent(token)}`);
     }
   }, []);
 
