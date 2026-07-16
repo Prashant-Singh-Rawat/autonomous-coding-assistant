@@ -178,7 +178,9 @@ async def github_callback(state: str, code: str, response: Response, db: Session
         response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=True, samesite="strict")
         
         # Redirect to frontend dashboard or specific onboarding step
-        return RedirectResponse(f"http://localhost:3000/api/auth/callback/success?access_token={access_token_jwt}")
+        import os
+        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+        return RedirectResponse(f"{frontend_url}/api/auth/callback/success?access_token={access_token_jwt}")
         
     elif oauth_state.purpose == "connect_repo_access":
         # Connect repo access to an already authenticated user
@@ -204,4 +206,6 @@ async def github_callback(state: str, code: str, response: Response, db: Session
             )
             db.add(github_identity)
         db.commit()
-        return RedirectResponse("http://localhost:3000/onboarding/github?success=true")
+        import os
+        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+        return RedirectResponse(f"{frontend_url}/onboarding/github?success=true")
