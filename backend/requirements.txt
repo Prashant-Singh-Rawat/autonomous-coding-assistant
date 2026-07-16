@@ -16,3 +16,6 @@ langchain-openai>=0.0.2
 faiss-cpu>=1.7.4
 httpx>=0.25.1
 email-validator>=2.1.0
+celery>=5.3.6
+redis>=5.0.1
+python-dotenv>=1.0.0

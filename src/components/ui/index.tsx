@@ -9,13 +9,15 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   size?: "default" | "sm" | "lg" | "icon";
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  loading?: boolean;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "default", size = "default", leftIcon, rightIcon, children, ...props }, ref) => {
+  ({ className, variant = "default", size = "default", leftIcon, rightIcon, loading, children, ...props }, ref) => {
     return (
       <button
         ref={ref}
+        disabled={loading || props.disabled}
         className={cn(
           "inline-flex items-center justify-center rounded-xl text-xs font-semibold transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-500 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] cursor-pointer",
           {
@@ -36,9 +38,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         )}
         {...props}
       >
-        {leftIcon && <span className="mr-1.5 flex-shrink-0">{leftIcon}</span>}
+        {loading ? (
+          <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        ) : (
+          leftIcon && <span className="mr-1.5 flex-shrink-0">{leftIcon}</span>
+        )}
         {children}
-        {rightIcon && <span className="ml-1.5 flex-shrink-0">{rightIcon}</span>}
+        {rightIcon && !loading && <span className="ml-1.5 flex-shrink-0">{rightIcon}</span>}
       </button>
     );
   }

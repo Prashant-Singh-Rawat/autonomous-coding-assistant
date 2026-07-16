@@ -7,7 +7,15 @@ from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
+from langchain_core.embeddings import Embeddings
 from . import models
+
+class MockEmbeddings(Embeddings):
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        return [[0.0] * 1536 for _ in texts]
+
+    def embed_query(self, text: str) -> List[float]:
+        return [0.0] * 1536
 
 # SECRET_KEY used to sign/verify vector stores. In production, ensure this is a robust environment variable.
 _INTEGRITY_KEY = os.getenv("SECRET_KEY", "fallback_dev_secret_key_for_signing_vector_stores")
@@ -36,7 +44,11 @@ def create_vector_store(repository: models.Repository, files: List[models.Reposi
     """
     Creates a FAISS vector store from the repository files and signs it.
     """
-    embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY", "dummy_key"))
+    api_key = os.getenv("OPENAI_API_KEY")
+    if api_key:
+        embeddings = OpenAIEmbeddings(api_key=api_key)
+    else:
+        embeddings = MockEmbeddings()
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
         chunk_overlap=200,
@@ -88,6 +100,10 @@ def get_vector_store(repository_id: str) -> Optional[FAISS]:
         if not hmac.compare_digest(expected_hash, computed_hash):
             raise ValueError(f"Vector store integrity check FAILED for {repository_id}")
             
-        embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY", "dummy_key"))
+        api_key = os.getenv("OPENAI_API_KEY")
+        if api_key:
+            embeddings = OpenAIEmbeddings(api_key=api_key)
+        else:
+            embeddings = MockEmbeddings()
         return FAISS.load_local(save_path, embeddings, allow_dangerous_deserialization=True)
     return None

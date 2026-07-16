@@ -1,99 +1,162 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
-import { Eye, EyeOff, GitBranch, Globe, Sparkles, ArrowRight, Lock, Mail, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, GitBranch, Globe, ArrowRight, Lock, Mail } from "lucide-react";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { motion } from "framer-motion";
 import { Button, Input } from "@/components/ui";
+import { AuthShell } from "@/components/layout/AuthShell";
 import { cn } from "@/lib/utils";
 
-export function AuthShell({ children, title, subtitle }: { children: React.ReactNode; title: string; subtitle?: string }) {
-  return (
-    <div className="min-h-screen flex bg-[#0A0A0F]">
-      <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-600/10 via-[#0A0A0F] to-purple-600/10 z-0" />
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-brand-500/10 rounded-full blur-[120px] animate-pulse-slow pointer-events-none" />
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-purple-500/10 rounded-full blur-[120px] animate-pulse-slow pointer-events-none" />
+const loginSchema = z.object({
+  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
+});
 
-        <div className="relative z-10 flex flex-col justify-between p-12 w-full h-full">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-600 to-purple-600 flex items-center justify-center shadow-glow-sm">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-sm text-white tracking-wide uppercase">Tony <span className="text-gradient">AI</span></span>
-          </div>
-
-          <div className="max-w-md">
-            <h2 className="text-2xl font-bold text-white mb-4 leading-tight">The Autonomous Software Engineering Workspace.</h2>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Connect your repositories, describe what you want built, and let specialized agents write, test, and deploy code for you.
-            </p>
-          </div>
-
-          <p className="text-[10px] text-muted-foreground/50">© 2026 Tony AI. All rights reserved.</p>
-        </div>
-      </div>
-
-      <div className="w-full lg:w-1/2 xl:w-[45%] flex flex-col justify-center px-6 md:px-16 lg:px-20 border-l border-white/8 relative bg-[#07070a]">
-        <div className="max-w-md w-full mx-auto space-y-8">
-          <div className="text-left">
-            <h2 className="text-xl font-bold text-white">{title}</h2>
-            {subtitle && <p className="text-xs text-muted-foreground mt-1.5">{subtitle}</p>}
-          </div>
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    mode: "onChange",
+  });
+
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  const onSubmit = async (data: LoginFormValues) => {
+    setIsLoading(true);
+    setLoginError(null);
+    try {
+      // OAuth2PasswordRequestForm expects form-encoded body
+      const form = new URLSearchParams();
+      form.append("username", data.email);
+      form.append("password", data.password);
+
+      const res = await fetch("http://localhost:8000/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: form.toString(),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setLoginError(err.detail ?? "Invalid email or password.");
+        setIsLoading(false);
+        return;
+      }
+
+      const { access_token } = await res.json();
+      // Store under both keys so all existing pages work
+      localStorage.setItem("token", access_token);
+      localStorage.setItem("access_token", access_token);
+      window.location.href = "/onboarding/repositories";
+    } catch {
+      setLoginError("Could not reach the server. Make sure the backend is running.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
+  } as any;
 
   return (
     <AuthShell title="Sign in to Workspace" subtitle="Enter your credentials to access your autonomous sandbox">
-      <form onSubmit={(e) => { e.preventDefault(); window.location.href = "/dashboard"; }} className="space-y-4">
-        <div className="space-y-1.5">
+      <motion.form 
+        onSubmit={handleSubmit(onSubmit)} 
+        className="space-y-4"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div variants={itemVariants} className="space-y-1.5">
           <label className="text-[10px] font-semibold text-white/50 uppercase tracking-widest">Email Address</label>
           <div className="relative">
             <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} className="pl-10" />
+            <Input 
+              type="email" 
+              placeholder="you@example.com" 
+              className={cn("pl-10", errors.email && "border-red-500 focus-visible:ring-red-500")}
+              {...register("email")}
+            />
           </div>
-        </div>
+          {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
+        </motion.div>
 
-        <div className="space-y-1.5">
+        <motion.div variants={itemVariants} className="space-y-1.5">
           <div className="flex items-center justify-between">
             <label className="text-[10px] font-semibold text-white/50 uppercase tracking-widest">Password</label>
             <Link href="/auth/forgot" className="text-[10px] font-medium text-brand-400 hover:underline">Forgot password?</Link>
           </div>
           <div className="relative">
             <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input type={showPassword ? "text" : "password"} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="pl-10 pr-10" />
+            <Input 
+              type={showPassword ? "text" : "password"} 
+              placeholder="••••••••" 
+              className={cn("pl-10 pr-10", errors.password && "border-red-500 focus-visible:ring-red-500")}
+              {...register("password")}
+            />
             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white transition-colors">
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
+          {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>}
+        </motion.div>
+
+        <motion.div variants={itemVariants}>
+          <Button type="submit" disabled={!isValid || isLoading} className="w-full h-11 text-sm mt-2" rightIcon={!isLoading ? <ArrowRight className="w-4 h-4" /> : undefined}>
+            {isLoading ? "Signing In..." : "Sign In"}
+          </Button>
+        </motion.div>
+
+        {loginError && (
+          <motion.p
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-xs text-red-400 text-center bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2"
+          >
+            {loginError}
+          </motion.p>
+        )}
+      </motion.form>
+
+      <motion.div 
+        initial={{ opacity: 0, y: 15 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ delay: 0.3, duration: 0.4 }}
+      >
+        <div className="grid grid-cols-2 gap-3 mt-4">
+          <a href="http://localhost:8000/auth/github/login" className="flex items-center justify-center gap-2 h-11 rounded-xl bg-white/7 border border-white/12 text-white text-sm font-medium hover:bg-white/10 hover:border-white/20 transition-all">
+            <GitBranch className="w-4 h-4" /> Continue with GitHub
+          </a>
+          <button type="button" disabled className="flex items-center justify-center gap-2 h-11 rounded-xl bg-white/7 border border-white/12 text-white/50 text-sm font-medium cursor-not-allowed">
+            <Globe className="w-4 h-4" /> Google
+          </button>
         </div>
-
-        <Button type="submit" className="w-full h-11 text-sm mt-2" rightIcon={<ArrowRight className="w-4 h-4" />}>
-          Sign In
-        </Button>
-      </form>
-
-      <div className="grid grid-cols-2 gap-3 mt-4">
-        <button type="button" id="auth-github-btn" className="flex items-center justify-center gap-2 h-11 rounded-xl bg-white/7 border border-white/12 text-white text-sm font-medium hover:bg-white/10 hover:border-white/20 transition-all">
-          <GitBranch className="w-4 h-4" /> GitHub
-        </button>
-        <button type="button" id="auth-google-btn" className="flex items-center justify-center gap-2 h-11 rounded-xl bg-white/7 border border-white/12 text-white text-sm font-medium hover:bg-white/10 hover:border-white/20 transition-all">
-          <Globe className="w-4 h-4" /> Google
-        </button>
-      </div>
-
-      <p className="text-center text-xs text-muted-foreground">
-        Don't have an account? <Link href="/auth/register" className="text-brand-400 font-medium hover:underline">Create an account</Link>
-      </p>
+        <p className="text-center text-xs text-muted-foreground mt-4">
+          Don&apos;t have an account? <Link href="/auth/register" className="text-brand-400 font-medium hover:underline">Create an account</Link>
+        </p>
+      </motion.div>
     </AuthShell>
   );
 }

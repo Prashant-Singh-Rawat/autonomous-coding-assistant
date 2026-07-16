@@ -1,6 +1,9 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import auth, repositories, chat
+from app.routers import auth, repositories, chat, integrations, workspace, webhooks, enterprise, github, repository, health, pull_requests, agents
 from app.database import Base, engine
 
 # Create tables for MVP instead of waiting for alembic run
@@ -22,7 +25,17 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(repositories.router)
+app.include_router(repositories.settings_router)
 app.include_router(chat.router)
+app.include_router(integrations.router)
+app.include_router(workspace.router)
+app.include_router(webhooks.router)
+app.include_router(enterprise.router)
+app.include_router(github.router)
+app.include_router(repository.router)
+app.include_router(health.router)
+app.include_router(pull_requests.router)
+app.include_router(agents.router)
 
 @app.get("/")
 def read_root():

@@ -9,5 +9,5 @@ const DEMO_USER = {
 };
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  return <AppShell user={DEMO_USER}>{children}</AppShell>;
+  return <AppShell>{children}</AppShell>;
 }

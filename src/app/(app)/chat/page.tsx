@@ -23,7 +23,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { cn, formatRelativeTime } from "@/lib/utils";
-import { Badge, Button, Separator } from "@/components/ui";
+import { Badge, Separator } from "@/components/ui";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -189,7 +189,7 @@ function Message({ message }: { message: typeof INITIAL_MESSAGES[0] }) {
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
-                  code({ node, inline, className, children, ...props }: any) {
+                  code({ inline, className, children, ...props }: React.ComponentPropsWithoutRef<'code'> & { inline?: boolean; node?: unknown }) {
                     return inline ? (
                       <code className="bg-white/10 rounded px-1.5 py-0.5 text-xs font-mono text-brand-300" {...props}>{children}</code>
                     ) : (
@@ -295,7 +295,7 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeSession, setActiveSession] = useState("1");
+  const activeSession = "1";
   const [repoContext, setRepoContext] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
